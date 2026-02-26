@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 
 console.log('🔄 Running database migrations...')
 
-const migrate = spawn('npm', ['run', 'migrate'], {
+const migrate = spawn('npm', ['run', 'migrate:prod'], {
   stdio: 'inherit',
   shell: true,
 })
