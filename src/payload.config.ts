@@ -13,6 +13,7 @@ import { Categories } from './collections/Categories'
 import { Projects } from './collections/Projects'
 import { Testimonials } from './collections/Testimonials'
 import { GlobalSettings } from './globals/GlobalSettings'
+import { seedDefaultAdmin } from './seed'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -46,4 +47,7 @@ export default buildConfig({
   }),
   sharp,
   plugins: [],
+  onInit: async (payload) => {
+    await seedDefaultAdmin(payload)
+  },
 })
