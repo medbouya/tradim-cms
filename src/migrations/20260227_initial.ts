@@ -126,8 +126,8 @@ CREATE TABLE IF NOT EXISTS "settings" (
 	"contact_info_address" varchar NOT NULL,
 	"social_links_linkedin" varchar,
 	"social_links_facebook" varchar,
-	"default_seo_title" varchar NOT NULL,
-	"default_seo_description" varchar NOT NULL,
+	"default_s_e_o_title" varchar NOT NULL,
+	"default_s_e_o_description" varchar NOT NULL,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
