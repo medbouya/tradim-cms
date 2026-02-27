@@ -62,6 +62,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/migrate-and-start.mjs ./
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
@@ -70,6 +71,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-# Start Next.js app with Payload CMS
-# Payload will automatically initialize database on onInit hook
-CMD npm run start:prod
+# Start: Run migrations first, then start the app
+CMD node migrate-and-start.mjs
