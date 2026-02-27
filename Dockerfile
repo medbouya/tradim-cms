@@ -47,6 +47,9 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# su-exec: lightweight privilege-drop utility (replaces gosu on Alpine)
+RUN apk add --no-cache su-exec
+
 # Remove this line if you do not have this folder
 COPY --from=builder /app/public ./public
 
@@ -64,11 +67,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-USER nextjs
-
+# Stay as root so we can fix volume permissions at startup, then drop to nextjs
 EXPOSE 3000
 
 ENV PORT 3000
 
-# Run pending migrations then start the server
-CMD ["sh", "-c", "npm run migrate && npm run start:prod"]
+# 1. Ensure media dir exists and is owned by nextjs (fixes existing Railway volumes)
+# 2. Drop to nextjs user for migrate + start
+CMD ["sh", "-c", "mkdir -p /app/media && chown -R nextjs:nodejs /app/media && exec su-exec nextjs sh -c 'npm run migrate && npm run start:prod'"]
