@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 
 -- User sessions (Payload v3 auth session storage)
 CREATE TABLE IF NOT EXISTS "users_sessions" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" varchar PRIMARY KEY NOT NULL,
 	"_order" integer NOT NULL,
 	"_parent_id" integer NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,

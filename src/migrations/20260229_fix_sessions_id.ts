@@ -1,12 +1,14 @@
 import { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres'
 import { sql } from 'drizzle-orm'
 
-// Adds the users_sessions table required by Payload v3 auth,
-// which was missing from the initial migration.
+// Recreates users_sessions with varchar PK instead of serial.
+// Payload v3 inserts UUIDs as the session id, which is incompatible with integer.
 export async function up({ payload }: MigrateUpArgs): Promise<void> {
 await payload.db.drizzle.execute(sql`
 
-CREATE TABLE IF NOT EXISTS "users_sessions" (
+DROP TABLE IF EXISTS "users_sessions";
+
+CREATE TABLE "users_sessions" (
 	"id" varchar PRIMARY KEY NOT NULL,
 	"_order" integer NOT NULL,
 	"_parent_id" integer NOT NULL,
