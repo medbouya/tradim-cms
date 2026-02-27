@@ -6,7 +6,7 @@ dotenv.config()
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverRuntimeConfig: {
-    DATABASE_URI: process.env.DATABASE_URI,
+    DATABASE_URL: process.env.DATABASE_URL,
   },
   // Don't use standalone output with Payload CMS as it needs full app for migrations
   webpack: (webpackConfig) => {
