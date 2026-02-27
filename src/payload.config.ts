@@ -4,6 +4,7 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import getConfig from 'next/config'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -17,6 +18,8 @@ import { seedDefaultAdmin } from './seed'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const { serverRuntimeConfig } = getConfig()
 
 export default buildConfig({
   admin: {
@@ -42,7 +45,7 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || '',
+      connectionString: serverRuntimeConfig.DATABASE_URI || '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
