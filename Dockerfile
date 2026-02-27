@@ -56,8 +56,7 @@ RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
 # Copy full Next.js build (needed for Payload CMS to run migrations)
-COPY --from=builder --chown=nextjs:nodejs /app/.next/server ./.next/server
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 
 # Copy source files needed for Payload migrations
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
@@ -73,4 +72,4 @@ ENV PORT 3000
 
 # Start Next.js app with Payload CMS
 # Payload will automatically initialize database on onInit hook
-CMD ["node_modules/.bin/next", "start"]
+CMD npm run start:prod
