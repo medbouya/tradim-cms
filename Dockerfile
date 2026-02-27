@@ -70,5 +70,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-# Start: Run migrations first, then start the app
-CMD node migrate-and-start.mjs
+# Start the app
+CMD ["npm", "run", "start:prod"]
