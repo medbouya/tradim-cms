@@ -62,7 +62,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nextjs:nodejs /app/migrate-and-start.mjs ./
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
