@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS "media" (
 	"width" numeric,
 	"height" numeric,
 	"focal_x" numeric,
-	"focal_y" numeric
+	"focal_y" numeric,
+	"thumbnail_u_r_l" varchar
 );
 
 -- Products (non-relationship fields; category_id and downloadable_pdf_id are direct FKs)
@@ -62,7 +63,7 @@ CREATE TABLE IF NOT EXISTS "products" (
 	"warranty_years" numeric NOT NULL,
 	"featured" boolean DEFAULT false,
 	"category_id" integer,
-	"downloadable_pdf_id" integer,
+	"downloadable_p_d_f_id" integer,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
@@ -223,7 +224,7 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
- ALTER TABLE "products" ADD CONSTRAINT "products_downloadable_pdf_id_media_id_fk" FOREIGN KEY ("downloadable_pdf_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
+ ALTER TABLE "products" ADD CONSTRAINT "products_downloadable_p_d_f_id_media_id_fk" FOREIGN KEY ("downloadable_p_d_f_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
