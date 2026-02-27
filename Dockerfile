@@ -55,13 +55,13 @@ COPY --from=builder /app/public ./public
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# Copy full Next.js build (needed for Payload CMS to run migrations)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/server ./.next/server
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy migration script, package.json, and node_modules for npm scripts and payload CLI
-COPY --from=builder --chown=nextjs:nodejs /app/migrate-and-start.mjs ./
+# Copy source files needed for Payload migrations
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
@@ -71,7 +71,6 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
-# Run migrations before starting the server using the migration script
-CMD node migrate-and-start.mjs
+# Start Next.js app with Payload CMS
+# Payload will automatically initialize database on onInit hook
+CMD ["node_modules/.bin/next", "start"]
