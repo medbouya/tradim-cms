@@ -60,9 +60,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy migration script and package.json for npm scripts
+# Copy migration script, package.json, and node_modules for npm scripts and payload CLI
 COPY --from=builder --chown=nextjs:nodejs /app/migrate-and-start.mjs ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
@@ -72,5 +73,5 @@ ENV PORT 3000
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
-# Run migrations before starting the server
-CMD npx payload migrate && HOSTNAME="0.0.0.0" node server.js
+# Run migrations before starting the server using the migration script
+CMD node migrate-and-start.mjs
