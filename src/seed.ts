@@ -10,47 +10,23 @@ import type { Payload } from 'payload'
  */
 export async function seedDefaultAdmin(payload: Payload): Promise<void> {
   try {
-    // Wait a moment for Payload to fully initialize all tables
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    const users = await payload.find({
+      collection: 'users',
+      limit: 1,
+    })
 
-    console.log('✅ Payload initialized successfully')
-
-    // Try to find existing users
-    let existingUsers
-    try {
-      existingUsers = await payload.find({
+    if (users.totalDocs === 0) {
+      await payload.create({
         collection: 'users',
-        limit: 1,
+        data: {
+          email: 'admin@tradim.mr',
+          password: 'Change-Me-On-First-Login-2026!',
+        },
       })
-    } catch (findError) {
-      // Tables might not exist yet, which is fine
-      console.log('ℹ️  Users table not ready yet, seeding skipped')
-      return
-    }
-
-    // Only create default admin if no users exist
-    if (existingUsers.totalDocs === 0) {
-      try {
-        await payload.create({
-          collection: 'users',
-          data: {
-            email: 'admin@tradim.mr',
-            password: 'Change-Me-On-First-Login-2026!',
-          },
-        })
-
-        console.log('✅ Default admin user created')
-        console.log('📧 Email: admin@tradim.mr')
-        console.log('🔑 Password: Change-Me-On-First-Login-2026!')
-        console.log('⚠️  IMPORTANT: Change password after first login!')
-      } catch (createError) {
-        console.warn('⚠️  Could not create default admin:', createError instanceof Error ? createError.message : createError)
-      }
-    } else {
-      console.log('ℹ️  Users already exist, skipping default admin creation')
+      console.log('✅ Default admin user created')
     }
   } catch (error) {
-    // Don't fail startup if seeding fails
-    console.warn('⚠️  Seeding issue (app will still work):', error instanceof Error ? error.message : error)
+    // This is expected on first run when tables don't exist
+    console.log('ℹ️  Could not find users table, this is normal on first startup.')
   }
 }
