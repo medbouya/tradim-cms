@@ -45,8 +45,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),
-  }),
-  sharp,
+  }),  onInit: async (payload) => {
+    await payload.migrate()
+  },  sharp,
   plugins: [],
   onInit: async (payload) => {
     await seedDefaultAdmin(payload)
