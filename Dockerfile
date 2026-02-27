@@ -53,6 +53,7 @@ COPY --from=builder /app/public ./public
 # Set the correct permission for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
+RUN mkdir -p media && chown nextjs:nodejs media
 
 # Copy full Next.js build (needed for Payload CMS to run migrations)
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
