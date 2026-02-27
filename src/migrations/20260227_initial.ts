@@ -3,6 +3,8 @@ import { sql } from 'drizzle-orm'
 
 export async function up({ payload }: MigrateUpArgs): Promise<void> {
 await payload.db.drizzle.execute(sql`
+
+-- Users (auth collection)
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -16,13 +18,16 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"lock_until" timestamp(3) with time zone
 );
 
+-- Categories
 CREATE TABLE IF NOT EXISTS "categories" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"name" varchar,
+	"name" varchar NOT NULL,
+	"slug" varchar NOT NULL,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
+-- Media (standard Payload upload fields)
 CREATE TABLE IF NOT EXISTS "media" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"alt" varchar,
@@ -33,35 +38,46 @@ CREATE TABLE IF NOT EXISTS "media" (
 	"mime_type" varchar,
 	"filesize" numeric,
 	"width" numeric,
-	"height" numeric
+	"height" numeric,
+	"focal_x" numeric,
+	"focal_y" numeric
 );
 
+-- Products (non-relationship fields; category_id and downloadable_pdf_id are direct FKs)
 CREATE TABLE IF NOT EXISTS "products" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"name" varchar,
-	"description" jsonb,
-	"price" numeric,
+	"name" varchar NOT NULL,
+	"slug" varchar NOT NULL,
+	"description" varchar NOT NULL,
+	"technical_specifications" jsonb,
+	"warranty_years" numeric NOT NULL,
+	"featured" boolean DEFAULT false,
+	"category_id" integer,
+	"downloadable_pdf_id" integer,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
+-- Products rels (hasMany: images → media)
 CREATE TABLE IF NOT EXISTS "products_rels" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"order" integer,
 	"parent_id" integer NOT NULL,
 	"path" varchar NOT NULL,
-	"categories_id" integer,
 	"media_id" integer
 );
 
+-- Projects
 CREATE TABLE IF NOT EXISTS "projects" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"name" varchar,
-	"description" jsonb,
+	"title" varchar NOT NULL,
+	"location" varchar NOT NULL,
+	"description" varchar NOT NULL,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
+-- Projects rels (hasMany: images → media)
 CREATE TABLE IF NOT EXISTS "projects_rels" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"order" integer,
@@ -70,22 +86,43 @@ CREATE TABLE IF NOT EXISTS "projects_rels" (
 	"media_id" integer
 );
 
+-- Pages
 CREATE TABLE IF NOT EXISTS "pages" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"title" varchar,
-	"content" jsonb,
+	"title" varchar NOT NULL,
+	"slug" varchar NOT NULL,
+	"content" jsonb NOT NULL,
+	"seo_title" varchar,
+	"seo_description" varchar,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
+-- Testimonials
 CREATE TABLE IF NOT EXISTS "testimonials" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"quote" varchar,
-	"author" varchar,
+	"client_name" varchar NOT NULL,
+	"content" varchar NOT NULL,
 	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
+-- Settings (GlobalSettings global, slug: 'settings'; logo_id is a direct FK)
+CREATE TABLE IF NOT EXISTS "settings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"logo_id" integer,
+	"contact_info_email" varchar NOT NULL,
+	"contact_info_phone" varchar NOT NULL,
+	"contact_info_address" varchar NOT NULL,
+	"social_links_linkedin" varchar,
+	"social_links_facebook" varchar,
+	"default_seo_title" varchar NOT NULL,
+	"default_seo_description" varchar NOT NULL,
+	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+);
+
+-- Payload internal tables
 CREATE TABLE IF NOT EXISTS "payload_preferences" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"key" varchar,
@@ -110,27 +147,44 @@ CREATE TABLE IF NOT EXISTS "payload_migrations" (
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "email_idx" ON "users" ("email");
-CREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "categories" ("name");
-CREATE INDEX IF NOT EXISTS "order_idx" ON "products_rels" ("order");
-CREATE INDEX IF NOT EXISTS "parent_idx" ON "products_rels" ("parent_id");
-CREATE INDEX IF NOT EXISTS "path_idx" ON "products_rels" ("path");
-CREATE INDEX IF NOT EXISTS "order_idx" ON "projects_rels" ("order");
-CREATE INDEX IF NOT EXISTS "parent_idx" ON "projects_rels" ("parent_id");
-CREATE INDEX IF NOT EXISTS "path_idx" ON "projects_rels" ("path");
-CREATE INDEX IF NOT EXISTS "key_idx" ON "payload_preferences" ("key");
-CREATE INDEX IF NOT EXISTS "order_idx" ON "payload_preferences_rels" ("order");
-CREATE INDEX IF NOT EXISTS "parent_idx" ON "payload_preferences_rels" ("parent_id");
-CREATE INDEX IF NOT EXISTS "path_idx" ON "payload_preferences_rels" ("path");
+-- Unique indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_idx" ON "users" ("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "categories_slug_idx" ON "categories" ("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "products_slug_idx" ON "products" ("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "pages_slug_idx" ON "pages" ("slug");
 
+-- Products rels indexes
+CREATE INDEX IF NOT EXISTS "products_rels_order_idx" ON "products_rels" ("order");
+CREATE INDEX IF NOT EXISTS "products_rels_parent_idx" ON "products_rels" ("parent_id");
+CREATE INDEX IF NOT EXISTS "products_rels_path_idx" ON "products_rels" ("path");
+
+-- Projects rels indexes
+CREATE INDEX IF NOT EXISTS "projects_rels_order_idx" ON "projects_rels" ("order");
+CREATE INDEX IF NOT EXISTS "projects_rels_parent_idx" ON "projects_rels" ("parent_id");
+CREATE INDEX IF NOT EXISTS "projects_rels_path_idx" ON "projects_rels" ("path");
+
+-- Payload preferences indexes
+CREATE INDEX IF NOT EXISTS "payload_preferences_key_idx" ON "payload_preferences" ("key");
+CREATE INDEX IF NOT EXISTS "payload_preferences_rels_order_idx" ON "payload_preferences_rels" ("order");
+CREATE INDEX IF NOT EXISTS "payload_preferences_rels_parent_idx" ON "payload_preferences_rels" ("parent_id");
+CREATE INDEX IF NOT EXISTS "payload_preferences_rels_path_idx" ON "payload_preferences_rels" ("path");
+
+-- Foreign keys: products
 DO $$ BEGIN
- ALTER TABLE "products_rels" ADD CONSTRAINT "products_rels_parent_id_products_id_fk" FOREIGN KEY ("parent_id") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "products" ADD CONSTRAINT "products_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
- ALTER TABLE "products_rels" ADD CONSTRAINT "products_rels_categories_id_categories_id_fk" FOREIGN KEY ("categories_id") REFERENCES "categories"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "products" ADD CONSTRAINT "products_downloadable_pdf_id_media_id_fk" FOREIGN KEY ("downloadable_pdf_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+-- Foreign keys: products_rels
+DO $$ BEGIN
+ ALTER TABLE "products_rels" ADD CONSTRAINT "products_rels_parent_id_products_id_fk" FOREIGN KEY ("parent_id") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -141,6 +195,7 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 
+-- Foreign keys: projects_rels
 DO $$ BEGIN
  ALTER TABLE "projects_rels" ADD CONSTRAINT "projects_rels_parent_id_projects_id_fk" FOREIGN KEY ("parent_id") REFERENCES "projects"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
@@ -153,6 +208,14 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 
+-- Foreign keys: settings
+DO $$ BEGIN
+ ALTER TABLE "settings" ADD CONSTRAINT "settings_logo_id_media_id_fk" FOREIGN KEY ("logo_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+-- Foreign keys: payload_preferences_rels
 DO $$ BEGIN
  ALTER TABLE "payload_preferences_rels" ADD CONSTRAINT "payload_preferences_rels_parent_id_payload_preferences_id_fk" FOREIGN KEY ("parent_id") REFERENCES "payload_preferences"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
@@ -169,17 +232,18 @@ END $$;
 
 export async function down({ payload }: MigrateDownArgs): Promise<void> {
 await payload.db.drizzle.execute(sql`
-DROP TABLE "users";
-DROP TABLE "categories";
-DROP TABLE "media";
-DROP TABLE "products";
-DROP TABLE "products_rels";
-DROP TABLE "projects";
-DROP TABLE "projects_rels";
-DROP TABLE "pages";
-DROP TABLE "testimonials";
-DROP TABLE "payload_preferences";
-DROP TABLE "payload_preferences_rels";
-DROP TABLE "payload_migrations";
+DROP TABLE IF EXISTS "payload_preferences_rels";
+DROP TABLE IF EXISTS "payload_preferences";
+DROP TABLE IF EXISTS "settings";
+DROP TABLE IF EXISTS "testimonials";
+DROP TABLE IF EXISTS "pages";
+DROP TABLE IF EXISTS "projects_rels";
+DROP TABLE IF EXISTS "projects";
+DROP TABLE IF EXISTS "products_rels";
+DROP TABLE IF EXISTS "products";
+DROP TABLE IF EXISTS "media";
+DROP TABLE IF EXISTS "categories";
+DROP TABLE IF EXISTS "users";
+DROP TABLE IF EXISTS "payload_migrations";
 `);
 };

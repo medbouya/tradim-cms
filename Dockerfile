@@ -1,4 +1,3 @@
-# To use this Dockerfile, you have to set `output: 'standalone'` in your next.config.mjs file.
 # From https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
 
 FROM node:22.17.0-alpine AS base
@@ -70,5 +69,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-# Start the app
-CMD ["npm", "run", "start:prod"]
+# Run pending migrations then start the server
+CMD ["sh", "-c", "npm run migrate && npm run start:prod"]
