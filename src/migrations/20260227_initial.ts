@@ -18,6 +18,15 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"lock_until" timestamp(3) with time zone
 );
 
+-- User sessions (Payload v3 auth session storage)
+CREATE TABLE IF NOT EXISTS "users_sessions" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"_order" integer NOT NULL,
+	"_parent_id" integer NOT NULL,
+	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+	"expires_at" timestamp(3) with time zone
+);
+
 -- Categories
 CREATE TABLE IF NOT EXISTS "categories" (
 	"id" serial PRIMARY KEY NOT NULL,
@@ -147,6 +156,10 @@ CREATE TABLE IF NOT EXISTS "payload_migrations" (
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 
+-- Users sessions indexes
+CREATE INDEX IF NOT EXISTS "users_sessions_order_idx" ON "users_sessions" ("_order");
+CREATE INDEX IF NOT EXISTS "users_sessions_parent_idx" ON "users_sessions" ("_parent_id");
+
 -- Unique indexes
 CREATE UNIQUE INDEX IF NOT EXISTS "users_email_idx" ON "users" ("email");
 CREATE UNIQUE INDEX IF NOT EXISTS "categories_slug_idx" ON "categories" ("slug");
@@ -168,6 +181,13 @@ CREATE INDEX IF NOT EXISTS "payload_preferences_key_idx" ON "payload_preferences
 CREATE INDEX IF NOT EXISTS "payload_preferences_rels_order_idx" ON "payload_preferences_rels" ("order");
 CREATE INDEX IF NOT EXISTS "payload_preferences_rels_parent_idx" ON "payload_preferences_rels" ("parent_id");
 CREATE INDEX IF NOT EXISTS "payload_preferences_rels_path_idx" ON "payload_preferences_rels" ("path");
+
+-- Foreign keys: users_sessions
+DO $$ BEGIN
+ ALTER TABLE "users_sessions" ADD CONSTRAINT "users_sessions_parent_id_users_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
 
 -- Foreign keys: products
 DO $$ BEGIN
@@ -242,6 +262,7 @@ DROP TABLE IF EXISTS "projects";
 DROP TABLE IF EXISTS "products_rels";
 DROP TABLE IF EXISTS "products";
 DROP TABLE IF EXISTS "media";
+DROP TABLE IF EXISTS "users_sessions";
 DROP TABLE IF EXISTS "categories";
 DROP TABLE IF EXISTS "users";
 DROP TABLE IF EXISTS "payload_migrations";
